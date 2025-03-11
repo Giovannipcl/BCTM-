@@ -113,13 +113,13 @@ bctm_tensor_multi = function(A,Al,X,K1,K2,K3,q,index){
   }
   
 
-  system.time({xin = calc_x02(c(1,1),rep(1,length(indext)),Matrix(A,sparse = TRUE),Matrix(Al,sparse=TRUE),indext,K1,K2,K3,X)})
+  xin = calc_x02(c(1,1),rep(1,length(indext)),Matrix(A,sparse = TRUE),Matrix(Al,sparse=TRUE),indext,K1,K2,K3,X)
   
 
   cl <- makeCluster(spec=detectCores(), type="FORK", outfile="")
 
-  system.time({ d = optimParallel(par = c(1,1), fn = calc_lpost32,xin = xin, method = "L-BFGS-B",
-                                  control=list(fnscale=-1,maxit = 5000,trace = TRUE),hessian = FALSE, parallel=list(loginfo=TRUE,cl = cl))})
+  d = optimParallel(par = c(1,1), fn = calc_lpost32,xin = xin, method = "L-BFGS-B",
+                                  control=list(fnscale=-1,maxit = 5000,trace = TRUE),hessian = FALSE, parallel=list(loginfo=TRUE,cl = cl))
   
 
   
@@ -132,7 +132,7 @@ bctm_tensor_multi = function(A,Al,X,K1,K2,K3,q,index){
  
   
   xis_c = function(index){
-    return(seq(mu_ini[index]-8.1*sqrt(sigma_ini[index]),mu_ini[index]+8.1*sqrt(sigma_ini[index]),length = 71))
+    return(seq(mu_ini[index]-8.1*sqrt(sigma_ini[index]),mu_ini[index]+8.1*sqrt(sigma_ini[index]),length = 51))
   }
 
 
@@ -177,8 +177,8 @@ bctm_tensor_multi = function(A,Al,X,K1,K2,K3,q,index){
   
   ###############################3
 
-  nx = 7
-  ny =7
+  nx = 6
+  ny =6
  
   
   xy.coarse <- cbind( rep( seq(sigmamod[1] -1,sigmamod[1] + 1,length = nx), each=ny), rep(seq(sigmamod[2] -1,sigmamod[2] + 1,length = nx),ny ) )
@@ -191,15 +191,15 @@ bctm_tensor_multi = function(A,Al,X,K1,K2,K3,q,index){
   post_x2 =  mclapply(lista, function(alpha_) {
 
     mode_ = calc_x02(alpha_,xin,Matrix(A,sparse = TRUE),Matrix(Al,sparse = TRUE),indext,K1,K2,K3,X)
-    H1 = calc_neg_hess_ff4(mode_,alpha_)
+    H1 = calc_neg_hess_ff422(mode_,alpha_,Matrix(A,sparse = TRUE),Matrix(Al,sparse=TRUE),K1,K2,K3,X,indext)
     chol_H_ = chol(H1)
     H = chol2inv(chol_H_)
-    ta = mclapply(seq(1:ncol(A)), function (ii){
+    ta = lapply(seq(1:ncol(A)), function (ii){
       Append(matrix(kronecker.prod(xis_c2(ii,maximos) -mode_[ii],H[-ii,ii]*(1/H[ii,ii])),ncol = 31,nrow = ncol(A) - 1) + mode_[-ii]
              ,xis_c2(ii,maximos),after = ii - 1,rows = TRUE)})
 
     pila = apply_to_list_parallel(ta,A,alpha_,Al,K1,K2,K3,X,indext)
-    posti = mclapply(seq(1:ncol(A)),normal,pila = pila)
+    posti = lapply(seq(1:ncol(A)),normal,pila = pila)
 
     return(list(
       sigma = points_t,
@@ -745,8 +745,8 @@ bctm_vcm_re2 = function(A,Al,X,K1,K2,K3,q,index){
   cl <- makeCluster(spec=detectCores(), type = "FORK",outfile="")
   
   
-  system.time({ d = optimParallel(par = c(1,1), fn = calc_lpost32,xin = xin, method = "L-BFGS-B",
-                                  control=list(fnscale=-1,maxit = 5000,trace = TRUE),hessian = FALSE, parallel=list(loginfo=TRUE,cl = cl))})
+  d = optimParallel(par = c(1,1), fn = calc_lpost32,xin = xin, method = "L-BFGS-B",
+                                  control=list(fnscale=-1,maxit = 5000,trace = TRUE),hessian = FALSE, parallel=list(loginfo=TRUE,cl = cl))
   
   
   stopCluster(cl)
@@ -832,7 +832,7 @@ bctm_vcm_re2 = function(A,Al,X,K1,K2,K3,q,index){
       Append(matrix(kronecker.prod(xis_c2(ii,maximos) -mode_[ii],H[-ii,ii]*(1/H[ii,ii])),ncol = 31,nrow = ncol(A) - 1) + mode_[-ii]
              ,xis_c2(ii,maximos),after = ii - 1,rows = TRUE)})
     pila = apply_to_list_parallel(ta,A,alpha_,Al,K1,K2,K3,X,indext)
-    posti = mclapply(seq(1:ncol(A)),normal,pila = pila,mc.cores = 6)
+    posti = lapply(seq(1:ncol(A)),normal,pila = pila)
     return(list(
       sigma = points_t,
       maximos = maximos,
