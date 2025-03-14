@@ -275,7 +275,7 @@ prob_estim = function(ind,Gamma){
 }
 
 
-Estim = mclapply(seq(1:(dim(df)[1])),prob_estim, Gamma = Gamma, mc.cores = 6)
+Estim = mclapply(seq(1:(dim(df)[1])),prob_estim, Gamma = Gamma, mc.cores = 1)
 
 
 qm = sapply(Estim, "[[","qm")     # Median
