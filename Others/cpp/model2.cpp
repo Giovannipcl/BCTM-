@@ -20,16 +20,16 @@ arma::vec gamma_f(const arma::vec& beta, const arma::uvec& index) {
 }
 
 arma::sp_mat diag_term2(const arma::sp_mat& A, const arma::sp_mat& Cbetal_beta, const arma::vec& gamma) {
-  // Calcular o vetor necessário
+
   arma::vec diag_vec = (A * Cbetal_beta).t() * (-A * gamma);
   
-  // Obter o tamanho do vetor
+
   arma::uword n = diag_vec.n_elem;
   
   // Criar a matriz diagonal esparsa diretamente
   arma::sp_mat sparse_diag(n, n);
   for (arma::uword i = 0; i < n; ++i) {
-    if (diag_vec[i] != 0) { // Apenas valores não nulos
+    if (diag_vec[i] != 0) {
       sparse_diag(i, i) = diag_vec[i];
     }
   }
@@ -42,39 +42,33 @@ arma::sp_mat Cbeta(const arma::vec& beta, const arma::uvec& index) {
   // Inicializar cbetat com uns
   arma::vec cbetat(beta.n_elem, arma::fill::ones);
   
-  // Atualizar os valores de acordo com index
+
   for (size_t i = 0; i < index.n_elem; ++i) {
     if (index[i]) {
       cbetat[i] = std::exp(beta[i]);
     }
   }
   
-  // Criar uma matriz diagonal esparsa diretamente
-  arma::sp_mat sparseDiagMatrix(beta.n_elem, beta.n_elem); // Matriz esparsa vazia
+
+  arma::sp_mat sparseDiagMatrix(beta.n_elem, beta.n_elem);
   for (size_t i = 0; i < beta.n_elem; ++i) {
-    sparseDiagMatrix(i, i) = cbetat[i]; // Apenas valores da diagonal
+    sparseDiagMatrix(i, i) = cbetat[i];
   }
   
   return sparseDiagMatrix;
 }
 
 arma::sp_mat K(const arma::vec& sigma, const arma::mat& K1, const arma::mat& K2, const arma::mat& K3, const arma::mat& X) {
-  // Compute exp(sigma[0]) * (K1)
-  arma::sp_mat part1 = exp(sigma[0]) * arma::sp_mat(K1);  // Converte K1 para sp_mat
-  
-  // Compute exp(sigma[1]) * K3
-  arma::sp_mat part2 = exp(sigma[1]) * arma::sp_mat(K2);  // Converte K2 para sp_mat
-  
-  // Combine the matrices
-  arma::sp_mat combined_K = part1 + part2;  // Soma as duas matrizes esparsas
-  
-  // Create a diagonal matrix with 10^-6 on the diagonal, with the same number of columns as X
+ 
+  arma::sp_mat part1 = exp(sigma[0]) * arma::sp_mat(K1);
+  arma::sp_mat part2 = exp(sigma[1]) * arma::sp_mat(K2);
+  arma::sp_mat combined_K = part1 + part2;
  
   arma::sp_mat diag_mat = arma::speye(X.n_cols, X.n_cols) * 1e-6;
-  // Combine the matrices into a block diagonal sparse matrix
+ 
   arma::sp_mat result(combined_K.n_rows + diag_mat.n_rows, combined_K.n_cols + diag_mat.n_cols);
   
-  // Fill the sparse matrix: top-left block (combined_K), bottom-right block (diag_mat)
+  
   result.submat(0, 0, combined_K.n_rows - 1, combined_K.n_cols - 1) = combined_K;
   result.submat(combined_K.n_rows, combined_K.n_cols, result.n_rows - 1, result.n_cols - 1) = diag_mat;
   
@@ -302,9 +296,11 @@ arma::vec calc_x02(const arma::vec& alpha, arma::vec x0, const arma::sp_mat& A, 
     arma::sp_mat H = -calc_neg_hess_ff4(x, alpha, A, Al, K1,K2,K3,X, index); 
     
     // Usando sp_solve para resolver o sistema linear esparso
-    x = x - arma::spsolve(H, g1);
+    //x = x - arma::spsolve(H, g1);
+      
     // Update x
-    //x = x - arma::solve(H, g1);
+      arma::mat H_dense = arma::mat(H); 
+      x = x - arma::solve(H_dense, g1);
     
     // Check for convergence
     if (arma::mean(arma::square(x - x0)) < tol) {

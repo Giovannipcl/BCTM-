@@ -162,7 +162,7 @@ marginals2 = lapply(1:length(maximos),function(ii) marginal(ii,post_multi, maxim
                                                            sigma_ini = sigma_ini,lista = lista,lpost = lpost,weight = weight))
 
 ### Simulating values from these marginals
-Beta = mclapply(seq(1,length(maximos),1),MH,post_multi,maximos,sigma_ini,lista,lpost,weight,mc.cores =6 )
+Beta = mclapply(seq(1,length(maximos),1),MH,post_multi,maximos,sigma_ini,lista,lpost,weight,mc.cores =1 )
 Beta = matrix(unlist(Beta),ncol = ncol(A),nrow = length(Beta[[1]]))
 
 
@@ -275,7 +275,7 @@ prob_estim = function(ind,Gamma){
 }
 
 
-Estim = mclapply(seq(1:(dim(df)[1])),prob_estim, Gamma = Gamma, mc.cores = 1)
+Estim = mclapply(seq(1:(dim(df)[1])),prob_estim, Gamma = Gamma, mc.cores = 6)
 
 
 qm = sapply(Estim, "[[","qm")     # Median
